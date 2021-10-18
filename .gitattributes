@@ -1,0 +1,5 @@
+ts/tests/coverage/* linguist-vendored
+gulpfile.js linguist-vendored
+jest.config.js linguist-vendored
+package.json linguist-vendored
+package-lock.json linguist-vendored
