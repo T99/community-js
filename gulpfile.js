@@ -1,9 +1,9 @@
 /*
  * Created by Trevor Sears <trevor@trevorsears.com> (https://trevorsears.com/).
  * 8:48 PM -- June 16th, 2019.
- * Project: <name>
+ * Project: community-js
  * 
- * <name> - <desc>
+ * community-js - Unified user-management logic for login-enabled applications.
  * Copyright (C) 2021 Trevor Sears
  * 
  * This program is free software: you can redistribute it and/or modify

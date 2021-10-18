@@ -1,7 +1,7 @@
 {
-	"name": "<name>",
-	"version": "<version>",
-	"description": "<desc>",
+	"name": "@t99/community",
+	"version": "0.1.0",
+	"description": "\"how many god damn times am I going to write the same user management code over and over again?\"",
 	"main": "js/main",
 	"types": ".d.ts/main",
 	"scripts": {
@@ -10,15 +10,18 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/<github_org>/<base_name>.git"
+		"url": "git+https://github.com/T99/community-js.git"
 	},
 	"keywords": [],
 	"author": "Trevor Sears <trevor@trevorsears.com> (https://trevorsears.com/)",
 	"license": "GPL-3.0-or-later",
 	"bugs": {
-		"url": "https://github.com/<github_org>/<base_name>/issues"
+		"url": "https://github.com/T99/community-js/issues"
 	},
-	"homepage": "https://github.com/<github_org>/<base_name>#readme",
+	"homepage": "https://github.com/T99/community-js#readme",
+	"dependencies": {
+		"mysql": "^2.18.1"
+	},
 	"devDependencies": {
 		"typescript": "latest",
 		"tslint": "latest",
@@ -29,6 +32,7 @@
 		"gulp-typescript": "latest",
 		"gulp-uglify-es": "latest",
 		"jest": "latest",
-		"ts-jest": "latest"
+		"ts-jest": "latest",
+		"@types/mysql": "^2.15.19"
 	}
 }

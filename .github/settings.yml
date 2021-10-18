@@ -1,17 +1,17 @@
 repository:
   
   # The name of the repository. Changing this will rename the repository
-  # name: iterator
+  name: community-js
   
   # A short description of the repository that will show up on GitHub
-  # description: A collection of classes that allow iteration over a predefined collection of elements.
+  description: "how many god damn times am I going to write the same user management code over and over again?"
   
   # A URL with more information about the repository
-  # homepage: https://jsdsl.github.io/iterator/
+  homepage: https://t99.github.io/community-js/
   
   # A comma-separated list of topics to set on the repository
-  # topics: >-
-  # comma, separated, list, of, tags
+  topics: >-
+  users, user-management
   
   # Either `true` to make the repository private, or `false` to make it public.
   private: false
