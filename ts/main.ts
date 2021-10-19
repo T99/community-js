@@ -29,3 +29,40 @@
  */
 
 // export { ClassName } from "./class-location";
+
+import mysql, { Pool as MySQLConnectionPool } from "mysql";
+import { Community } from "./community";
+import { credentials } from "./credentials";
+import { User } from "./schema/user";
+// import { User } from "./schema/user";
+
+export async function main(): Promise<void> {
+	
+	let connection: MySQLConnectionPool = mysql.createPool(credentials);
+	
+	let community: Community = await Community.gather({
+		
+		connection,
+		
+		authentication: {
+			
+			pepper: "%70i$%2#IVbm$vNO30fVZ&XoytPdT*5c",
+			hashingIterations: 10_000,
+			passwordConformityFunction: (password: string): boolean => password.length >= 8
+			
+		}
+		
+	});
+	
+	// console.log(`User count: ${await community.countUsers()}`);
+	// console.log(`Group count: ${await community.countGroups()}`);
+	
+	let user: User = await community.getUser({ id: 2 }) as User;
+	
+	// console.log(await community.getAllUsers());
+	
+	connection.end();
+	
+}
+
+main().catch((error: any): void => console.error(error));
