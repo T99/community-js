@@ -1,4 +1,5 @@
 import { Pool as MySQLConnectionPool } from "mysql";
+import { PasswordConformityFunction } from "./authentication-agent";
 
 export type SQLFieldDescriptor = {
 	
@@ -14,29 +15,37 @@ export type SQLFieldDescriptor = {
 	
 	comment?: string
 	
+};
+
+export type TableSettings = {
+	
+	tableName?: string,
+	
+	additionalFields?: Array<SQLFieldDescriptor>
+	
 }
 
 export type CommunitySettings = {
 	
 	connection: MySQLConnectionPool,
 	
-	schema: string,
+	schema?: string,
 	
-	users: {
-		
-		additionalFields?: Array<SQLFieldDescriptor>
-		
-	}
+	users?: TableSettings,
 	
-	groups?: {
-		
-		additionalFields?: Array<SQLFieldDescriptor>
-		
-	},
+	groups?: TableSettings,
 	
-	permissions?: {
+	membership?: TableSettings,
+	
+	permissions?: TableSettings,
+	
+	authentication: {
 		
-		additionalFields?: Array<SQLFieldDescriptor>
+		pepper: string,
+		
+		hashingIterations: number,
+		
+		passwordConformityFunction: PasswordConformityFunction
 		
 	}
 	
