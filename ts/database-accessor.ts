@@ -4,26 +4,68 @@ import { SQLFieldDescriptor } from "./community-settings";
 /**
  * The type of the object that is resolved from Promises returned from DatabaseManager#query calls.
  *
- * @see DatabaseManager#query
+ * @see DatabaseAccessor#query
  */
 export type MySQLQueryResults = {
 	
-	results: { [columnName: string]: any },
+	results: Array<{ [columnName: string]: any }>,
 	
 	fields: FieldInfo[]
 	
 };
 
-export class DatabaseAccessor {
-
+/**
+ * A class capable of connecting to and querying a MySQL database, which provides a number of quality-of-life/utility
+ * query methods on top of the normal/raw `query` method that is standard.
+ * 
+ * @author Trevor Sears <trevor@trevorsears.com> (https://trevorsears.com/)
+ * @version v0.1.0
+ * @since v0.1.0
+ */
+export abstract class DatabaseAccessor {
+	
+	/**
+	 * The connection pool that this instance uses to access the desired database.
+	 */
 	protected connection: MySQLConnectionPool;
 	
-	public constructor(connection: MySQLConnectionPool) {
+	/**
+	 * Initializes a new DatabaseAccessor object that will connect via the provided connection pool.
+	 * 
+	 * @param {Pool} connection The connection pool to use to access the desired database.
+	 */
+	protected constructor(connection: MySQLConnectionPool) {
 		
 		this.connection = connection;
 		
 	}
 	
+	/**
+	 * Returns the fully qualified table identifier based on the provided raw table and schema name.
+	 * 
+	 * @param {string} tableName The name of the table for which to build an identifier.
+	 * @param {string} schemaName The name of the schema containing the table for which to build an identifier.
+	 * @returns {string} The fully qualified table identifier based on the provided raw table and schema name.
+	 */
+	protected buildTableID(tableName: string, schemaName?: string): string {
+		
+		let result: string = "";
+		
+		if (schemaName !== undefined) result += `${this.connection.escapeId(schemaName)}.`;
+		
+		result += `${this.connection.escapeId(tableName)}`;
+		
+		return result;
+		
+	}
+	
+	/**
+	 * Builds and returns a query-ready string column definition based on the provided {@link SQLFieldDescriptor}
+	 * object.
+	 * 
+	 * @param {SQLFieldDescriptor} descriptor The {@link SQLFieldDescriptor} object describing the desired column info.
+	 * @returns {string} A query-ready string column definition based on the provided {@link SQLFieldDescriptor} object. 
+	 */
 	protected formulateColumnDefinition(descriptor: SQLFieldDescriptor): string {
 		
 		let name: string = this.connection.escapeId(descriptor.name);
@@ -54,7 +96,7 @@ export class DatabaseAccessor {
 	 * @return {Promise<MySQLQueryResults>} A Promise that resolves with the results of the specified query, or rejects
 	 * with the error that occurred while attempting to complete the query.
 	 */
-	public async query(options: string | QueryOptions, values?: any[]): Promise<MySQLQueryResults> {
+	protected async query(options: string | QueryOptions, values?: any[]): Promise<MySQLQueryResults> {
 		
 		if (values === undefined) {
 			
@@ -102,7 +144,7 @@ export class DatabaseAccessor {
 	 * @return {Promise<boolean>} A Promise that resolves to true if there is at least one row returned by the query,
 	 * otherwise resolving to false, or rejects with the error that occurred while attempting to complete the query.
 	 */
-	public async queryForExistence(options: string | QueryOptions, values?: any[]): Promise<boolean> {
+	protected async queryForExistence(options: string | QueryOptions, values?: any[]): Promise<boolean> {
 		
 		let results: MySQLQueryResults = await this.query(options, values);
 		
@@ -123,7 +165,7 @@ export class DatabaseAccessor {
 	 * row of the result set, or undefined if no rows were returned, or rejects with the error that occurred while
 	 * attempting to complete the query.
 	 */
-	public async queryForSingleCell<T>(options: string | QueryOptions, values?: any[]): Promise<T | undefined> {
+	protected async queryForSingleCell<T>(options: string | QueryOptions, values?: any[]): Promise<T | undefined> {
 		
 		let results: MySQLQueryResults = await this.query(options, values);
 		
@@ -148,7 +190,7 @@ export class DatabaseAccessor {
 	 * @return {Promise<number>} A Promise that resolves to a count of the number of rows returned by the given query,
 	 * or rejects with the error that occurred while attempting to complete the query.
 	 */
-	public async queryForRowCount(options: string | QueryOptions, values?: any[]): Promise<number> {
+	protected async queryForRowCount(options: string | QueryOptions, values?: any[]): Promise<number> {
 		
 		let results: MySQLQueryResults = await this.query(options, values);
 		
@@ -167,7 +209,7 @@ export class DatabaseAccessor {
 	 * @return {Promise<T[]>} A Promise that resolves to an array of the values of the first column of the results, or
 	 * rejects with the error that occurred while attempting to complete the query.
 	 */
-	public async queryForColumnArray<T>(options: string | QueryOptions, values?: any[]): Promise<T[]> {
+	protected async queryForColumnArray<T>(options: string | QueryOptions, values?: any[]): Promise<T[]> {
 		
 		let results: MySQLQueryResults = await this.query(options, values);
 		
@@ -190,7 +232,7 @@ export class DatabaseAccessor {
 	 *
 	 * @return {Promise<void>} A Promise that resolves once the operation is complete.
 	 */
-	public async close(): Promise<void> {
+	protected async close(): Promise<void> {
 		
 		return new Promise<void>((resolve: () => void, reject: (reason: any) => void): void => {
 			
