@@ -1,6 +1,5 @@
 import crypto from "crypto";
-import { User } from "./schema/user";
-import { UserPasswordInformation } from "./schema/user-password-information";
+import { UserPasswordInformation } from "./schema/user";
 
 /**
  * The type of the function responsible for determining password conformity. A return value of 'true' from this function
@@ -99,12 +98,13 @@ export class AuthenticationAgent {
 	/**
 	 * Returns a Promise that resolves to true if the provided username and password combination are valid.
 	 *
-	 * @param {User} user The {@link User} object/information for the user for which login is being attempted.
+	 * @param {User} user The {@link UserPasswordInformation} object/information for the user for which login is being
+	 * attempted.
 	 * @param {string} passwordAttempt The user-provided password to attempt to login with.
 	 * @return {Promise<boolean>} A Promise that resolves to true if the provided username and password combination
 	 * are valid.
 	 */
-	public async checkLogin(user: User, passwordAttempt: string): Promise<boolean> {
+	public async checkLogin(user: UserPasswordInformation, passwordAttempt: string): Promise<boolean> {
 		
 		return (user.passwordHash === await this.createHash(
 			passwordAttempt,
