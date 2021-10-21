@@ -10,7 +10,9 @@ export type MySQLQueryResults = {
 	
 	results: Array<{ [columnName: string]: any }>,
 	
-	fields: FieldInfo[]
+	fields: FieldInfo[],
+	
+	insertId?: number
 	
 };
 

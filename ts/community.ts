@@ -1,9 +1,7 @@
 import { CommunitySettings, SQLFieldDescriptor } from "./community-settings";
 import { DatabaseAccessor, MySQLQueryResults } from "./database-accessor";
-import { User } from "./schema/user";
+import { User, UserPasswordInformation } from "./schema/user";
 import { Group } from "./schema/group";
-import { Membership } from "./schema/membership";
-import { Permission } from "./schema/permission";
 import { AuthenticationAgent } from "./authentication-agent";
 
 /**
@@ -13,11 +11,8 @@ import { AuthenticationAgent } from "./authentication-agent";
  */
 export type SemiPartial<T, U = {[K in keyof T]: Pick<T, K> }> = Partial<T> & U[keyof U];
 
-export class Community<
-	U extends User = User,
-	G extends Group = Group,
-	M extends Membership = Membership,
-	P extends Permission = Permission> extends DatabaseAccessor {
+export class Community<CustomUser = {}, CustomGroup = {},
+	CustomMembership = {}, CustomPermission = {}> extends DatabaseAccessor {
 	
 	protected tableIDs: {
 		
@@ -61,9 +56,9 @@ export class Community<
 		
 	}
 	
-	public static async gather(settings: CommunitySettings): Promise<Community> {
+	public static async gather<U, G, M, P>(settings: CommunitySettings): Promise<Community<U, G, M, P>> {
 		
-		let community: Community = new Community(settings);
+		let community: Community<U, G, M, P> = new Community(settings);
 		
 		await community.initializeUsersTable();
 		await community.initializeGroupsTable();
@@ -301,7 +296,7 @@ export class Community<
 	 * exists.
 	 * @see {@link SemiPartial} For more information regarding the type of the parameter of this function.
 	 */
-	public async doesUserExist(userInfo: SemiPartial<U>): Promise<boolean> {
+	public async doesUserExist(userInfo: SemiPartial<User<CustomUser>>): Promise<boolean> {
 		
 		return (await this.getUser(userInfo) !== undefined);
 		
@@ -316,7 +311,7 @@ export class Community<
 	 * matching the provided description, or undefined if no such user exists.
 	 * @see {@link SemiPartial} For more information regarding the type of the parameter of this function.
 	 */
-	public async getUser(userInfo: SemiPartial<U>): Promise<U | undefined> {
+	public async getUser(userInfo: SemiPartial<User<CustomUser>>): Promise<User<CustomUser> | undefined> {
 		
 		let whereClause: string = "";
 		let firstClause: boolean = true;
@@ -330,7 +325,7 @@ export class Community<
 				
 			} else whereClause += " AND"
 			
-			whereClause += ` ${key} = '${userInfo[key as keyof U]}'`
+			whereClause += ` ${key} = '${userInfo[key as keyof CustomUser]}'`
 			
 		}
 		
@@ -338,7 +333,7 @@ export class Community<
 		
 		let result: MySQLQueryResults = await this.query(query);
 		
-		if (result.results.length > 0) return result.results[0] as U;
+		if (result.results.length > 0) return result.results[0] as User<CustomUser>;
 		else return undefined;
 		
 	}
@@ -346,33 +341,108 @@ export class Community<
 	/**
 	 * Returns a Promise that will resolve to an array containing the {@link User} objects/information for every user in
 	 * this Community.
-	 * 
+	 *
 	 * @returns {Promise<U[]>} A Promise that will resolve to an array containing the {@link User} objects/information
 	 * for every user in this Community.
 	 */
-	public async getAllUsers(): Promise<U[]> {
+	public async getAllUsers(): Promise<User<CustomUser>[]> {
 		
 		let result: MySQLQueryResults = await this.query(`
 			SELECT * FROM ${this.tableIDs.users}
 		`);
 		
-		return (result.results ?? []) as U[];
-
+		return (result.results ?? []) as User<CustomUser>[];
+		
 	}
 	
-	/**
-	 * 
-	 * 
-	 * @param {SemiPartial<G>} groupInfo
-	 * @returns {Promise<G[]>}
-	 */
-	public async getUsersInGroup(groupInfo: SemiPartial<G>): Promise<U[]> {
+	public async createUser(password: string, userInfo: CustomUser): Promise<User<CustomUser> | undefined> {
+		
+		let passwordInfo: UserPasswordInformation | undefined = await this.authenticationAgent.createLogin(password);
+		
+		if (passwordInfo === undefined) return undefined;
+		
+		let fullUser: CustomUser & UserPasswordInformation = {
+			...userInfo,
+			...passwordInfo,
+		};
+		
+		let keys: string = Object.keys(fullUser).map(
+			(key: string): string => this.connection.escapeId(key)
+		).join(", ");
+		
+		let values: string = Object.values(fullUser).map(
+			(value: any): string => this.connection.escape(value)
+		).join(", ");
+		
+		keys = `(${keys})`;
+		values = `(${values})`;
+		
+		let result: MySQLQueryResults = await this.query(`
+			INSERT IGNORE ${this.tableIDs.users} ${keys} VALUES ${values}
+		`);
+		
+		let user: User<CustomUser> = undefined as any;
+		
+		return this.getUser({ id: 1 })
+		
+		return undefined as any;
+		
+	}
+	
+	public async updateUser(identifyingInfo: SemiPartial<User<CustomUser>>,
+							updatedInfo: CustomUser): Promise<User<CustomUser> | undefined> {
+		
+		return undefined as any;
+		
+	}
+	
+	public async updateUsers(identifyingInfo: SemiPartial<User<CustomUser>>,
+							 updatedInfo: CustomUser): Promise<User<CustomUser>[]> {
+		
+		return undefined as any;
+		
+	}
+	
+	public async deleteUser(userInfo: SemiPartial<User<CustomUser>>): Promise<User<CustomUser> | undefined> {
+		
+		return undefined as any;
+		
+	}
+	
+	public async deleteUsers(userInfo: SemiPartial<User<CustomUser>>): Promise<User<CustomUser>[]> {
+		
+		return undefined as any;
+		
+	}
+	
+	public async deleteAllUsers(): Promise<void> {}
+	
+	// public async addUserToGroups(userInfo: SemiPartial<User<CustomUser>>,
+	// 							 ...groupsInfo: SemiPartial<Group<CustomGroup>>[]): Promise<Group<CustomGroup>[]> {}
+	
+	// public async addUsersToGroup(groupInfo: SemiPartial<Group<CustomGroup>>,
+	// 							 ...usersInfo: SemiPartial<User<CustomUser>>[]): Promise<User<CustomUser>[]> {}
+	
+	// public async addUsersToGroups(usersInfo: Array<SemiPartial<User<CustomUser>>>,
+	// 							  groupsInfo: Array<SemiPartial<Group<CustomGroup>>>): Promise<Dunno> {}
+	
+	// isUserInGroup
+	
+	// areUsersInGroup
+	
+	// isUserInGroups
+	
+	// areUsersInGroups
+	
+	// can the above be made into efficient queries? if so, keep the method, if not, remove
+	
+	public async getUsersInGroup(groupInfo: SemiPartial<Group<CustomGroup>>): Promise<User<CustomUser>[]> {
 		
 		return [];
 		
 	}
 	
-	public async getGroupsForUser(userInfo: SemiPartial<U>): Promise<G[]> {
+	public async getGroupsForUser(userInfo: SemiPartial<User<CustomUser>>): Promise<Group<CustomGroup>[]> {
 		
 		return [];
 		
