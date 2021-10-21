@@ -4,21 +4,16 @@
  * Project: community-js
  */
 
-import { DatabaseRowObject } from "./database-row-object";
-import { UserPasswordInformation } from "./user-password-information";
+import { DatabaseIdentifiable } from "./database-identifiable";
 
-export type User<AdditionalFields extends {} = {}> = {
+export type UserPasswordInformation = {
 	
-	id: number,
+	passwordHash: string,
 	
-	username: string,
+	passwordSalt: string,
 	
-	firstName: string,
+	passwordIterations: number
 	
-	lastName: string,
-	
-	phone: string,
-	
-	email: string
-	
-} & UserPasswordInformation & DatabaseRowObject & AdditionalFields;
+};
+
+export type User<AdditionalFields extends {} = {}> = DatabaseIdentifiable & UserPasswordInformation & AdditionalFields;

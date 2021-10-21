@@ -4,7 +4,7 @@
  * Project: community-js
  */
  
-import { DatabaseRowObject } from "./database-row-object";
+import { DatabaseTimestampable } from "./database-timestampable";
 
 export type Permission<AdditionalFields extends {} = {}> = {
 	
@@ -12,4 +12,4 @@ export type Permission<AdditionalFields extends {} = {}> = {
 	
 	permission: string
 	
-} & DatabaseRowObject & AdditionalFields;
+} & DatabaseTimestampable & AdditionalFields;

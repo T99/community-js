@@ -4,7 +4,7 @@
  * Project: community-js
  */
  
-import { DatabaseRowObject } from "./database-row-object";
+import { DatabaseTimestampable } from "./database-timestampable";
 
 export type Membership<AdditionalFields extends {} = {}> = {
 	
@@ -12,4 +12,4 @@ export type Membership<AdditionalFields extends {} = {}> = {
 	
 	groupID: number
 	
-} & DatabaseRowObject & AdditionalFields;
+} & DatabaseTimestampable & AdditionalFields;

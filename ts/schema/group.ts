@@ -4,13 +4,6 @@
  * Project: community-js
  */
  
+import { DatabaseIdentifiable } from "./database-identifiable";
 
-import { DatabaseRowObject } from "./database-row-object";
-
-export type Group<AdditionalFields extends {} = {}> = {
-	
-	id: number,
-	
-	name: string,
-	
-} & DatabaseRowObject & AdditionalFields;
+export type Group<AdditionalFields extends {} = {}> = DatabaseIdentifiable & AdditionalFields;

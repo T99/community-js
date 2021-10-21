@@ -4,7 +4,7 @@
  * Project: community-js
  */
  
-export type DatabaseRowObject = {
+export type DatabaseTimestampable = {
 	
 	modifiedAt: Date,
 	
