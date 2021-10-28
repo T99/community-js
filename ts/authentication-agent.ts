@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { UserPasswordInformation } from "./schema/user";
+import { CommunityError } from "./community-error";
 
 /**
  * The type of the function responsible for determining password conformity. A return value of 'true' from this function
@@ -122,10 +123,18 @@ export class AuthenticationAgent {
 	 * @return {Promise<UserPasswordInformation>} A Promise that resolves to said login information for the provided
 	 * password.
 	 */
-	public async createLogin(password: string): Promise<UserPasswordInformation | undefined> {
+	public async createLogin(password: string): Promise<UserPasswordInformation> {
 		
 		// If the password conformity check fails, do not generate user password information and return undefined.
-		if (!this.checkPasswordConformity(password)) return undefined;
+		if (!this.checkPasswordConformity(password)) {
+			
+			throw new CommunityError(
+				"NONCONFORMING_PASSWORD",
+				"An attempt was made to create a UserPasswordInformation object via #createLogin with a " +
+				"password that did not conform to the standard presented by the configured conformity function."
+			);
+			
+		}
 		
 		let passwordSalt: string = crypto.randomBytes(128).toString("base64");
 		let passwordIterations: number = this.hashingIterations;

@@ -335,9 +335,7 @@ export class Community<CustomUser = {}, CustomGroup = {},
 	 */
 	public async createUser(password: string, userInfo: CustomUser): Promise<UserBase & CustomUser> {
 		
-		let passwordInfo: UserPasswordInformation | undefined = await this.authenticationAgent.createLogin(password);
-		
-		if (passwordInfo === undefined) return undefined;
+		let passwordInfo: UserPasswordInformation = await this.authenticationAgent.createLogin(password);
 		
 		let fullUser: CustomUser & UserPasswordInformation = {
 			...userInfo,
