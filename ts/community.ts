@@ -194,10 +194,10 @@ export class Community<CustomUser = {}, CustomGroup = {},
 				createdAt DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
 					COMMENT 'The date at which this row was first inserted.',
 				PRIMARY KEY (userID, groupID),
-                FOREIGN KEY user_id_fk (userID)
+                FOREIGN KEY memberships_user_id_fk (userID)
                     REFERENCES users(id)
                     ON DELETE CASCADE,
-                FOREIGN KEY group_id_fk (groupID)
+                FOREIGN KEY memberships_group_id_fk (groupID)
                     REFERENCES \`groups\`(id)
                     ON DELETE CASCADE
 			) COMMENT 'A many-to-many associative table that matches users to groups.'
@@ -241,7 +241,7 @@ export class Community<CustomUser = {}, CustomGroup = {},
 				createdAt DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
 					COMMENT 'The date at which this row was first inserted.',
                 PRIMARY KEY (userID, permission),
-                FOREIGN KEY user_id_fk (userID)
+                FOREIGN KEY permissions_user_id_fk (userID)
                     REFERENCES users(id)
                     ON DELETE CASCADE
 			) COMMENT 'An enumeration of platform users and their associated information.'
