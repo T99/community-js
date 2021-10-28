@@ -74,7 +74,7 @@ export abstract class DatabaseAccessor {
 		let type: string = descriptor.type;
 		let nullability: string = (descriptor.nullable ?? true ? " NULL" : " NOT NULL"); 
 		
-		let result: string = `\`${name}\` ${type} ${nullability}`;
+		let result: string = `${name} ${type} ${nullability}`;
 		
 		if (descriptor.default !== undefined) result += ` DEFAULT ${descriptor.default}`;
 		
