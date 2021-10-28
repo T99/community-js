@@ -92,16 +92,7 @@ export class Community<CustomUser = {}, CustomGroup = {},
 			CREATE TABLE IF NOT EXISTS ${this.tableIDs.users} (
 				id INT NOT NULL AUTO_INCREMENT PRIMARY KEY UNIQUE
 					COMMENT 'The internal ID of this user.',
-				username VARCHAR(128) NOT NULL UNIQUE
-					COMMENT 'This user\\'s uniquely identifying name, used for login and various other purposes.',
-				firstName VARCHAR(128) NOT NULL
-					COMMENT 'This user\\'s given name.',
-				lastName VARCHAR(128) NOT NULL
-					COMMENT 'This user\\'s family name.',
-				phone VARCHAR(32) NOT NULL
-					COMMENT 'This user\\'s phone number.',
-				email VARCHAR(256) NOT NULL
-					COMMENT 'This user\\'s email address.',
+                ${additionalFields}
 				passwordHash VARCHAR(256) NOT NULL
 					COMMENT 'A hashed version of this user\\'s password, having been hashed with this user\\'s salt and the server\\'s pepper.',
 				passwordSalt VARCHAR(256) NOT NULL
