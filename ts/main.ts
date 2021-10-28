@@ -33,33 +33,77 @@
 import mysql, { Pool as MySQLConnectionPool } from "mysql";
 import { Community } from "./community";
 import { credentials } from "./credentials";
-import { User } from "./schema/user";
-// import { User } from "./schema/user";
+
+type CustomUser = {
+
+	username: string,
+
+	firstName: string,
+
+	lastName: string,
+
+	phone?: string,
+
+	email?: string
+
+};
 
 export async function main(): Promise<void> {
 	
-	let connection: MySQLConnectionPool = mysql.createPool(credentials);
+	let connection: MySQLConnectionPool = mysql.createPool({ multipleStatements: true, ...credentials });
 	
-	let community: Community = await Community.gather({
-		
+	let community: Community<CustomUser> = await Community.gather({
+
 		connection,
-		
+
 		authentication: {
-			
+
 			pepper: "%70i$%2#IVbm$vNO30fVZ&XoytPdT*5c",
 			hashingIterations: 10_000,
 			passwordConformityFunction: (password: string): boolean => password.length >= 8
-			
+
+		},
+
+		users: {
+
+			additionalFields: [
+				{
+					name: "username",
+					type: "VARCHAR(128)",
+					nullable: false,
+					unique: true
+				},
+				{
+					name: "firstName",
+					type: "VARCHAR(128)",
+					nullable: false
+				},
+				{
+					name: "lastName",
+					type: "VARCHAR(128)",
+					nullable: false
+				},
+				{
+					name: "phone",
+					type: "VARCHAR(128)",
+					nullable: true
+				},
+				{
+					name: "email",
+					type: "VARCHAR(128)",
+					nullable: true
+				}
+			]
+
 		}
-		
+
 	});
 	
-	// console.log(`User count: ${await community.countUsers()}`);
-	// console.log(`Group count: ${await community.countGroups()}`);
-	
-	let user: User = await community.getUser({ id: 2 }) as User;
-	
-	// console.log(await community.getAllUsers());
+	console.log(await community.updateUsers({
+		phone: "2"
+	}, {
+		phone: "3"
+	}));
 	
 	connection.end();
 	
