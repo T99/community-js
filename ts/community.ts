@@ -363,17 +363,76 @@ export class Community<CustomUser = {}, CustomGroup = {},
 		
 	}
 	
-	public async updateUser(identifyingInfo: SemiPartial<User<CustomUser>>,
-							updatedInfo: CustomUser): Promise<User<CustomUser> | undefined> {
-		
-		return undefined as any;
-		
-	}
+	// TODO [10/27/21 @ 4:10 PM] Is it even worth it to provide a singular 'updateUser' function, rather than just the
+	//                           normal 'updateUsers' function? All 'updateUser' would do would be to ensure that only
+	//                           a single row was being updated.
 	
-	public async updateUsers(identifyingInfo: SemiPartial<User<CustomUser>>,
-							 updatedInfo: CustomUser): Promise<User<CustomUser>[]> {
+	// public async updateUser(identifyingInfo: UserDescriptor<CustomUser>, updatedInfo: SemiPartial<CustomUser>,
+	// 						orderingColumn: keyof (UserBase & CustomUser) = "id",
+	// 						orderAscending: boolean = true): Promise<(UserBase & CustomUser) | undefined> {
+	//	
+	// 	let whereClause: string = generateWhereClauseForObject(identifyingInfo, this.connection, false);
+	//	
+	// 	let result: MySQLQueryResults = await this.query(`
+	// 		UPDATE ${this.tableIDs.users}
+	// 		SET ${generateSetClauseForObject(updatedInfo, this.connection, false)}
+	// 		WHERE ${whereClause}
+	// 		ORDER BY ${this.connection.escapeId(orderingColumn as string)} ${orderAscending ? "ASC" : "DESC"}
+	// 		LIMIT 1
+	// 	`);
+	//	
+	// 	result;
+	//	
+	// 	return undefined as any;
+	//	
+	//}
+	
+	/**
+	 * Updates the information for the users described by the `identifyingInfo` argument to that information which was
+	 * provided via the `updatedInfo` argument.
+	 * 
+	 * @param {UserDescriptor<CustomUser>} identifyingInfo The identifying information for the users that should be
+	 * updated.
+	 * @param {SemiPartial<CustomUser>} updatedInfo The new information that should be used to update the information
+	 * for the users specified via the `identifyingInfo` argument.
+	 * @returns {Promise<(UserBase & CustomUser)[]>} An array of the updated information for the users specified by the
+	 * `identifyingInfo` argument.
+	 */
+	public async updateUsers(identifyingInfo: UserDescriptor<CustomUser>,
+							 updatedInfo: SemiPartial<CustomUser>): Promise<(UserBase & CustomUser)[]> {
 		
-		return undefined as any;
+		let result: MySQLQueryResults = await this.query(`
+			SELECT @@autocommit INTO @storedAutocommitState;
+			SET autocommit = FALSE;
+			START TRANSACTION;
+
+			DROP TABLE IF EXISTS updatedUserIDs;
+
+			CREATE TEMPORARY TABLE IF NOT EXISTS updatedUserIDs(id INT);
+
+			TRUNCATE TABLE updatedUserIDs;
+
+			INSERT INTO updatedUserIDs
+			SELECT id
+			FROM ${this.tableIDs.users}
+			WHERE ${generateWhereClauseForObject(identifyingInfo, this.connection, false)};
+
+			UPDATE ${this.tableIDs.users}
+				RIGHT OUTER JOIN updatedUserIDs
+					ON ${this.tableIDs.users}.id = updatedUserIDs.id
+			SET ${generateSetClauseForObject(updatedInfo, this.connection, false)};
+
+			SELECT *
+			FROM ${this.tableIDs.users}
+				RIGHT OUTER JOIN updatedUserIDs
+					ON ${this.tableIDs.users}.id = updatedUserIDs.id;
+
+			COMMIT;
+			SET autocommit = @storedAutocommitState;
+		`);
+		
+		// The relevant select statement from the above query is the 9th statement of the query.
+		return result.results[8] as (UserBase & CustomUser)[];
 		
 	}
 	
