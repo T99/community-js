@@ -5,6 +5,8 @@
  */
 
 import { DatabaseIdentifiable } from "./database-identifiable";
+import { DatabaseTimestampable } from "./database-timestampable";
+import { SemiPartial } from "../util/semipartial";
 
 export type UserPasswordInformation = {
 	
@@ -16,4 +18,6 @@ export type UserPasswordInformation = {
 	
 };
 
-export type User<AdditionalFields extends {} = {}> = DatabaseIdentifiable & UserPasswordInformation & AdditionalFields;
+export type UserBase = UserPasswordInformation & DatabaseIdentifiable & DatabaseTimestampable;
+
+export type UserDescriptor<CustomUser = {}> = SemiPartial<UserBase> | SemiPartial<CustomUser>;

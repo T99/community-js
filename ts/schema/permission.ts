@@ -5,11 +5,14 @@
  */
  
 import { DatabaseTimestampable } from "./database-timestampable";
+import { SemiPartial } from "../util/semipartial";
 
-export type Permission<AdditionalFields extends {} = {}> = {
+export type PermissionBase = {
 	
 	userID: string,
 	
 	permission: string
 	
-} & DatabaseTimestampable & AdditionalFields;
+} & DatabaseTimestampable;
+
+export type PermissionDescriptor<CustomPermission = {}> = SemiPartial<PermissionBase> | SemiPartial<CustomPermission>;

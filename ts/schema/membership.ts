@@ -5,11 +5,14 @@
  */
  
 import { DatabaseTimestampable } from "./database-timestampable";
+import { SemiPartial } from "../util/semipartial";
 
-export type Membership<AdditionalFields extends {} = {}> = {
+export type MembershipBase = {
 	
 	userID: number,
 	
 	groupID: number
 	
-} & DatabaseTimestampable & AdditionalFields;
+} & DatabaseTimestampable;
+
+export type MembershipDescriptor<CustomMembership = {}> = SemiPartial<MembershipBase> | SemiPartial<CustomMembership>;

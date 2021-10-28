@@ -10,4 +10,4 @@ export type DatabaseTimestampable = {
 	
 	createdAt: Date
 	
-}
+};

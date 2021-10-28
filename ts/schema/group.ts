@@ -5,5 +5,9 @@
  */
  
 import { DatabaseIdentifiable } from "./database-identifiable";
+import { DatabaseTimestampable } from "./database-timestampable";
+import { SemiPartial } from "../util/semipartial";
 
-export type Group<AdditionalFields extends {} = {}> = DatabaseIdentifiable & AdditionalFields;
+export type GroupBase = DatabaseIdentifiable & DatabaseTimestampable;
+
+export type GroupDescriptor<CustomGroup = {}> = SemiPartial<GroupBase> | SemiPartial<CustomGroup>;
