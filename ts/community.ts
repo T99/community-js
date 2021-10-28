@@ -99,7 +99,6 @@ export class Community<CustomUser = {}, CustomGroup = {},
 					COMMENT 'A random base64-encoded byte-string used to give additional cryptographic strength to the user\\'s hashed password.',
 				passwordIterations INT NOT NULL
 					COMMENT 'The number of iterations over which this user\\'s password is hashed.',
-				${additionalFields}
 				modifiedAt DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP
 					COMMENT 'The date at which this row was last modified.',
 				createdAt DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -137,8 +136,6 @@ export class Community<CustomUser = {}, CustomGroup = {},
 			CREATE TABLE IF NOT EXISTS ${this.tableIDs.groups} (
 				id INT NOT NULL AUTO_INCREMENT PRIMARY KEY UNIQUE
 					COMMENT 'The internal ID of this group.',
-				name VARCHAR(256) NOT NULL UNIQUE
-					COMMENT 'This user\\'s uniquely identifying name, used for login and various other purposes.',
 				${additionalFields}
 				modifiedAt DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP
 					COMMENT 'The date at which this row was last modified.',
