@@ -42,7 +42,7 @@ export class Community<CustomUser = {}, CustomGroup = {},
 			
 			groups: this.buildTableID(settings.groups?.tableName ?? "groups", settings.schema),
 			
-			membership: this.buildTableID(settings.membership?.tableName ?? "membership", settings.schema),
+			membership: this.buildTableID(settings.membership?.tableName ?? "memberships", settings.schema),
 			
 			permissions: this.buildTableID(settings.permissions?.tableName ?? "permissions", settings.schema)
 			
