@@ -2,13 +2,9 @@ import { CommunitySettings, SQLFieldDescriptor } from "./community-settings";
 import { DatabaseAccessor, MySQLQueryResults } from "./database-accessor";
 import { UserBase, UserDescriptor, UserPasswordInformation } from "./schema/user";
 import { AuthenticationAgent } from "./authentication-agent";
-
-/**
- * A type akin to the builtin 'Partial' type, but requiring that at least one property from the specified type be set.
- * 
- * <a href="https://stackoverflow.com/a/48244432">Credit to jcalz on StackOverflow</a>
- */
-export type SemiPartial<T, U = {[K in keyof T]: Pick<T, K> }> = Partial<T> & U[keyof U];
+import { SemiPartial } from "./util/semipartial";
+import { generateSetClauseForObject, generateWhereClauseForObject } from "./util/sql-construction";
+import { CommunityError } from "./community-error";
 
 export class Community<CustomUser = {}, CustomGroup = {},
 	CustomMembership = {}, CustomPermission = {}> extends DatabaseAccessor {
@@ -348,19 +344,9 @@ export class Community<CustomUser = {}, CustomGroup = {},
 			...passwordInfo,
 		};
 		
-		let keys: string = Object.keys(fullUser).map(
-			(key: string): string => this.connection.escapeId(key)
-		).join(", ");
-		
-		let values: string = Object.values(fullUser).map(
-			(value: any): string => this.connection.escape(value)
-		).join(", ");
-		
-		keys = `(${keys})`;
-		values = `(${values})`;
-		
 		let result: MySQLQueryResults = await this.query(`
-			INSERT IGNORE ${this.tableIDs.users} ${keys} VALUES ${values}
+			INSERT IGNORE INTO ${this.tableIDs.users}
+			SET ${generateSetClauseForObject(fullUser, this.connection, false)}
 		`);
 		
 		if (result.results.affectedRows === 1) {
