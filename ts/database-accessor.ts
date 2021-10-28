@@ -8,11 +8,17 @@ import { SQLFieldDescriptor } from "./community-settings";
  */
 export type MySQLQueryResults = {
 	
-	results: Array<{ [columnName: string]: any }>,
+	results: Array<{ [columnName: string]: any }> & {
+		
+		insertId?: number,
+		
+		affectedRows?: number,
+		
+		changedRows?: number
+		
+	},
 	
 	fields: FieldInfo[],
-	
-	insertId?: number
 	
 };
 
