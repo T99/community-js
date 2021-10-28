@@ -1,7 +1,6 @@
 import { CommunitySettings, SQLFieldDescriptor } from "./community-settings";
 import { DatabaseAccessor, MySQLQueryResults } from "./database-accessor";
-import { User, UserPasswordInformation } from "./schema/user";
-import { Group } from "./schema/group";
+import { UserBase, UserDescriptor, UserPasswordInformation } from "./schema/user";
 import { AuthenticationAgent } from "./authentication-agent";
 
 /**
@@ -277,73 +276,68 @@ export class Community<CustomUser = {}, CustomGroup = {},
 	 * 
 	 * Note: Do not use this method as a pre-cursor to {@link Community#getUser} - this method utilizes that method
 	 * internally, and simply checks if the result is defined. Instead, simply call {@link Community#getUser} and check
-	 * for yourself whether or not the result is defined, and then use the result if so.
+	 * for yourself whether or not the result is defined.
 	 * 
-	 * @param {SemiPartial<U>} userInfo The information of the user to check for.
+	 * @param {UserDescriptor<CustomUser>} userInfo The information of the user to check for.
 	 * @returns {Promise<boolean>} A Promise that will resolve to true if a user matching the provided description
 	 * exists.
-	 * @see {@link SemiPartial} For more information regarding the type of the parameter of this function.
+	 * @see {@link UserDescriptor} For more information regarding the type of the parameter for this function.
 	 */
-	public async doesUserExist(userInfo: SemiPartial<User<CustomUser>>): Promise<boolean> {
+	public async doesUserExist(userInfo: UserDescriptor<CustomUser>): Promise<boolean> {
 		
 		return (await this.getUser(userInfo) !== undefined);
 		
 	}
 	
 	/**
-	 * Returns a Promise that will resolve to the {@link User} object/information for the user matching the provided
+	 * Returns a Promise that will resolve to the user object/information for the user matching the provided
 	 * description, or undefined if no such user exists.
 	 * 
-	 * @param {SemiPartial<U>} userInfo The information of the user to retrieve.
-	 * @returns {Promise<U | undefined>} A Promise that will resolve to the {@link User} object/information for the user
-	 * matching the provided description, or undefined if no such user exists.
-	 * @see {@link SemiPartial} For more information regarding the type of the parameter of this function.
+	 * @param {UserDescriptor<CustomUser>} userInfo The information of the user to retrieve.
+	 * @returns {Promise<(UserBase & CustomUser) | undefined>} A Promise that will resolve to the object/information for
+	 * the user matching the provided description, or undefined if no such user exists.
+	 * @see {@link UserDescriptor} For more information regarding the type of the parameter for this function.
 	 */
-	public async getUser(userInfo: SemiPartial<User<CustomUser>>): Promise<User<CustomUser> | undefined> {
+	public async getUser(userInfo: UserDescriptor<CustomUser>): Promise<(UserBase & CustomUser) | undefined> {
 		
-		let whereClause: string = "";
-		let firstClause: boolean = true;
+		let result: MySQLQueryResults = await this.query(`
+			SELECT *
+			FROM ${this.tableIDs.users}
+			${generateWhereClauseForObject(userInfo, this.connection)}
+			LIMIT 1
+		`);
 		
-		for (let key of Object.keys(userInfo)) {
-			
-			if (firstClause) {
-				
-				whereClause += " WHERE";
-				firstClause = false;
-				
-			} else whereClause += " AND"
-			
-			whereClause += ` ${key} = '${userInfo[key as keyof CustomUser]}'`
-			
-		}
-		
-		let query: string = `SELECT * FROM ${this.tableIDs.users}${whereClause} LIMIT 1`;
-		
-		let result: MySQLQueryResults = await this.query(query);
-		
-		if (result.results.length > 0) return result.results[0] as User<CustomUser>;
+		if (result.results.length > 0) return result.results[0] as UserBase & CustomUser;
 		else return undefined;
 		
 	}
 	
 	/**
-	 * Returns a Promise that will resolve to an array containing the {@link User} objects/information for every user in
-	 * this Community.
+	 * Returns a Promise that will resolve to an array containing the user objects/information for every user in this
+	 * Community.
 	 *
-	 * @returns {Promise<U[]>} A Promise that will resolve to an array containing the {@link User} objects/information
-	 * for every user in this Community.
+	 * @returns {Promise<(UserBase & CustomUser)[]>} A Promise that will resolve to an array containing the user
+	 * objects/information for every user in this Community.
 	 */
-	public async getAllUsers(): Promise<User<CustomUser>[]> {
+	public async getAllUsers(): Promise<(UserBase & CustomUser)[]> {
 		
 		let result: MySQLQueryResults = await this.query(`
 			SELECT * FROM ${this.tableIDs.users}
 		`);
 		
-		return (result.results ?? []) as User<CustomUser>[];
+		return result.results as unknown as (UserBase & CustomUser)[];
 		
 	}
 	
-	public async createUser(password: string, userInfo: CustomUser): Promise<User<CustomUser> | undefined> {
+	/**
+	 * Attempts to create a new user with the provided information.
+	 * 
+	 * @param {string} password The password for the user that is being created.
+	 * @param {CustomUser} userInfo The additional information for the user that is being created.
+	 * @returns {Promise<(UserBase & CustomUser) | undefined>} A Promise that will resolve to the object/information for
+	 * the newly created user, or undefined if no user was created.
+	 */
+	public async createUser(password: string, userInfo: CustomUser): Promise<UserBase & CustomUser> {
 		
 		let passwordInfo: UserPasswordInformation | undefined = await this.authenticationAgent.createLogin(password);
 		
@@ -369,11 +363,19 @@ export class Community<CustomUser = {}, CustomGroup = {},
 			INSERT IGNORE ${this.tableIDs.users} ${keys} VALUES ${values}
 		`);
 		
-		let user: User<CustomUser> = undefined as any;
-		
-		return this.getUser({ id: 1 })
-		
-		return undefined as any;
+		if (result.results.affectedRows === 1) {
+			
+			return this.getUser({ id: result.results.insertId as number }) as Promise<UserBase & CustomUser>;
+			
+		} else {
+			
+			throw new CommunityError(
+				"USER_ALREADY_EXISTS",
+				"Failed to insert a new user into the users table. This is most likely due to a failed " +
+				"uniqueness constraint, meaning that the user most likely already exists."
+			);
+			
+		}
 		
 	}
 	
@@ -391,28 +393,50 @@ export class Community<CustomUser = {}, CustomGroup = {},
 		
 	}
 	
-	public async deleteUser(userInfo: SemiPartial<User<CustomUser>>): Promise<User<CustomUser> | undefined> {
+	/**
+	 * 
+	 * @param {UserDescriptor<CustomUser>} userInfo
+	 * @returns {Promise<boolean>} A Promise that resolves to true if the specified user was found and deleted.
+	 */
+	public async deleteUser(userInfo: UserDescriptor<CustomUser>): Promise<boolean> {
 		
 		return undefined as any;
 		
 	}
 	
-	public async deleteUsers(userInfo: SemiPartial<User<CustomUser>>): Promise<User<CustomUser>[]> {
+	/**
+	 * 
+	 * @param {UserDescriptor<CustomUser>} userInfo
+	 * @returns {Promise<number>} A Promise that resolves to a numeric count of the number of users deleted. 
+	 */
+	public async deleteUsers(userInfo: UserDescriptor<CustomUser>): Promise<number> {
 		
 		return undefined as any;
 		
 	}
 	
-	public async deleteAllUsers(): Promise<void> {}
+	/**
+	 * 
+	 * @returns {Promise<number>} A Promise that resolves to a numeric count of the number of users deleted.
+	 */
+	public async deleteAllUsers(): Promise<number> {
+		
+		let result: MySQLQueryResults = await this.query(`
+			DELETE FROM ${this.tableIDs.users}
+		`);
+		
+		return result.results.changedRows ?? 0;
+		
+	}
 	
-	// public async addUserToGroups(userInfo: SemiPartial<User<CustomUser>>,
-	// 							 ...groupsInfo: SemiPartial<Group<CustomGroup>>[]): Promise<Group<CustomGroup>[]> {}
+	// public async addUserToGroups(userInfo: UserDescriptor<CustomUser>,
+	// 							 ...groupsInfo: SemiPartial<CustomGroup>[]): Promise<(GroupBase & CustomGroup)[]> {}
 	
-	// public async addUsersToGroup(groupInfo: SemiPartial<Group<CustomGroup>>,
-	// 							 ...usersInfo: SemiPartial<User<CustomUser>>[]): Promise<User<CustomUser>[]> {}
+	// public async addUsersToGroup(groupInfo: SemiPartial<GroupBase> | SemiPartial<CustomGroup>,
+	// 							 ...usersInfo: SemiPartial<CustomUser>[]): Promise<(UserBase & CustomUser)[]> {}
 	
-	// public async addUsersToGroups(usersInfo: Array<SemiPartial<User<CustomUser>>>,
-	// 							  groupsInfo: Array<SemiPartial<Group<CustomGroup>>>): Promise<Dunno> {}
+	// public async addUsersToGroups(usersInfo: Array<SemiPartial<CustomUser>>,
+	// 							  groupsInfo: Array<SemiPartial<CustomGroup>>): Promise<Dunno> {}
 	
 	// isUserInGroup
 	
@@ -424,15 +448,15 @@ export class Community<CustomUser = {}, CustomGroup = {},
 	
 	// can the above be made into efficient queries? if so, keep the method, if not, remove
 	
-	public async getUsersInGroup(groupInfo: SemiPartial<Group<CustomGroup>>): Promise<User<CustomUser>[]> {
+	public async getUsersInGroup(groupInfo: SemiPartial<CustomGroup>): Promise<CustomUser[]> {
 		
-		return [];
+		return undefined as any;
 		
 	}
 	
-	public async getGroupsForUser(userInfo: SemiPartial<User<CustomUser>>): Promise<Group<CustomGroup>[]> {
+	public async getGroupsForUser(userInfo: SemiPartial<CustomUser>): Promise<CustomGroup[]> {
 		
-		return [];
+		return undefined as any;
 		
 	}
 	
